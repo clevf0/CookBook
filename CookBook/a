@@ -1,0 +1,12 @@
+
+folder_name = 'CookBook'  #Folder's name
+documents_path = os.path.join(os.path.expanduser('~'), 'Documents') #Document folder
+folder_path = os.path.join(documents_path, folder_name)
+
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
+    print("Folder created successfully!")
+else:
+    print("Founded")
+
+
