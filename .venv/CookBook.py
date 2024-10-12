@@ -6,36 +6,57 @@ def file_exists(folder_path, file_name):
 
 #Interface
 class CookBook:
-
+    #Declaring folder_path through out the class
     def __init__(self):
         self.folder_path = 0
 
-    def findfolder(self,x):
-        folder_path = x
+    #function to find folder
+    def findFolder(self, x):
+        document_path = os.path.join(os.path.expanduser('~'), 'Documents')
+        try:
+            data_path = os.path.join(document_path, "cookbook")
+            x = os.path.join(data_path,x)
+        except Exception as e:
+            print(e)
+        if os.path.isdir(data_path):
+            print("Founded data path")
+            if os.path.isdir(x):
+                print(f"selected {x}")
+                self.folder_path = x
+                return x
+            else:
+                print(f"file {x} is not founded")
+                return self.findFolder(input("Folder path: "))
 
-        if os.path.isdir(folder_path):
-            print(f"You selected: {folder_path}")
-            return folder_path
         else:
-            print("Invalid folder path. Please try again.")
-            return select_folder()
+            print("Try to make a new recipe first")
 
-    def makeFolder(self, x):
+
+
+    #function for creating folder
+    def createFolder(self, x):
         folder_name = x  # Folder's name
-        documents_path = os.path.join(os.path.expanduser('~'), 'Documents') # Document folder
-        self.folder_path = os.path.join(documents_path, folder_name)
+        documents_path = os.path.join(os.path.expanduser('~'), 'Documents')# Document folder
+        data_path = os.path.join(documents_path, "cookbook") #File data path on document folder
+        self.folder_path = os.path.join(data_path, folder_name)
+        try:
+            if not os.path.exists(data_path):
+                os.makedirs(data_path)
 
-        if not os.path.exists(self.folder_path):
-            os.makedirs(self.folder_path)
-            print("Folder created successfully!")
-        else:
-            print("Founded")
+            if not os.path.exists(self.folder_path):
+                os.makedirs(self.folder_path)
+                print("Folder created successfully!")
+            else:
+                print("Founded")
+        except Exception as e:
+            print(e)
 
-    def makeRecipie(self):
-        file_name = input("Enter the name of the recipie: ")
+    #function to create recipe
+    def createRecipe(self):
+        file_name = input("Enter the name of the recipe: ")
         file_path = os.path.join(self.folder_path, f"{file_name}.txt")
         with open(file_path, 'w') as f:
-            print("ENTER 'done' IF FINISH INPUTTING RECIPIE")
+            print("ENTER 'done' IF FINISH INPUTTING RECIPE")
             while True:
                 ingredient = input("Enter the ingredient: ")
                 if ingredient.lower() == "done":
@@ -57,8 +78,8 @@ class CookBook:
                         break
                     i += 1
 
-
-    def view_recipe(self, name):
+    #function to view recipie
+    def viewRecipe(self, name):
         recipe_name = name
         recipe_path = os.path.join(self.folder_path, f"{recipe_name}.txt")
         if os.path.exists(recipe_path):
@@ -66,25 +87,26 @@ class CookBook:
                 print(f.read())
         else:
             print("Recipe not found.")
+    def pathSelected(self):                                                                                              #Used for debugging
+        print(self.folder_path)
 
-    def delete_recipe(self, delete):
-        recipe_name = delete
-        folder = self.folder_path
-        if os.path.exists(folder):
-            if file_exists(folder, recipe_name):
-                os.remove(recipe_path)
-            print("Recipe deleted successfully!")
-        else:
-            print("Recipe not found.")
+    #function to delete recipe(to be coded)
 
+    #function to list recipe created on the folder(to be coded)
 
 
 #UI
 print("BookCook")
 print("""
 What would you like to do?
-1.  Select/Make new account
-2.  Write Recipie
-3.  View Recipie
-4.  Delete Recipie
+1.  Make new file
+2.  Select file
+3.  Write Recipe
+4.  View Recipe
+5.  Delete Recipe
 """)
+
+app = CookBook()
+app.createFolder("sigma")
+app.findFolder("alpha")
+app.pathSelected()
