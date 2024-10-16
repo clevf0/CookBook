@@ -1,4 +1,5 @@
 import os
+import shutil
 
 def file_exists(folder_path, file_name):
     file_path = os.path.join(folder_path, file_name)
@@ -10,8 +11,9 @@ class CookBook:
     def __init__(self):
         document_path = os.path.join(os.path.expanduser('~'), 'Documents')
         self.dir_path = os.path.join(document_path, "cookbook")
-        self.folder_path = dir_path
-
+        self.folder_path = self.dir_path
+    def selectedd(self):
+        print(self.folder_path)
     def clear(self):
         self.folder_path = self.dir_path
 
@@ -24,12 +26,16 @@ class CookBook:
         try:
             if not os.path.exists(data_path):
 
-                print("File data not found, permission to create file data at ", documents_path," ? (y/n)")
+                print("File data not found, permission to create file data at ", documents_path," ? (y for yes/[any other key] for no)")
                 t = input(">>").lower()
                 if t == "y" or t == "yes":
-                    os.makedirs(data_path)
+                    try:
+                        os.makedirs(data_path)
+                    except PermissionError:
+                        print("Permission error has occured, please try running as Administrator")
+                        quit()
                 else:
-                    print()
+                    quit()
 
             if not os.path.exists(self.folder_path):
                 os.makedirs(self.folder_path)
@@ -43,15 +49,31 @@ class CookBook:
     def createRecipe(self):
         file_name = input("Enter the name of the recipe: ")
         file_path = os.path.join(self.folder_path, f"{file_name}.txt")
+
+        # Check if the file already exists
+        if os.path.exists(file_path):
+            print(f"A recipe with the name '{file_name}' already exists.")
+            return
+
         with open(file_path, 'w') as f:
             print("ENTER 'done' IF FINISH INPUTTING RECIPE")
+            f.write("**INGREDIENT**\n")
+            ingredients = []
+            i = 1
             while True:
                 ingredient = input("Enter the ingredient: ")
-                f.write("**INGREDIENT**")
                 if ingredient.lower() == "done":
                     break
+                elif ingredient in ingredients:
+                    print("Ingredient already added. Please enter a different ingredient.")
+                    continue
+                elif ingredient == " ":
+                    print("Ingredient can't be blanked out")
+                    continue
                 else:
-                    f.write(ingredient + '\n')
+                    f.write(f"{i}, {ingredient }\n")
+                    ingredients.append(ingredient)
+                    i += 1
 
             procedure = input("Do you want to enter procedures(y/n)?")
 
@@ -67,31 +89,39 @@ class CookBook:
                         break
                     i += 1
 
-    #function to view recipie
+    #function to view recipe
     def viewRecipe(self, name):
         recipe_name = name + ".txt"
-        recipe_path = os.path.join(self.folder_path, recipe_name)
+        folder = self.folder_path
+        recipe_path = os.path.join(folder, recipe_name)
+        if name == "done":
+            return True
         if file_exists(self.folder_path, recipe_name):
             with open(recipe_path, 'r') as f:
                 print(f.read())
-                return False
+                return True
         else:
             print(f"Recipe '{name}' not found in the selected folder.")
-            return True
+            return False
 
     #function to delete recipe(to be coded)
     def deleteFolder(self, folder_name):
         document_path = os.path.join(os.path.expanduser('~'), 'Documents')
         dir_path = os.path.join(document_path, "cookbook")
         folder_path = os.path.join(dir_path, folder_name)
+
         if os.path.exists(folder_path):
-            os.rmdir(folder_path)
-            print(f"Recipe '{folder_name}' deleted successfully!")
-            self.folder_path = dir_path
-            return False
+            try:
+                shutil.rmtree(folder_path)
+                print(f"Folder '{folder_name}' deleted successfully!")
+                self.folder_path = dir_path
+                return True
+            except Exception as e:
+                print(f"Error deleting folder '{folder_name}': {e}")
+                return False
         else:
-            print(f"Recipe '{folder_name}' not found.")
-            return True
+            print(f"Folder '{folder_name}' not found.")
+            return False
 
     def deleteRecipe(self, name):
         recipe_path = os.path.join(self.folder_path, f"{name}.txt")  # Create the full path to the recipe file
@@ -118,25 +148,31 @@ class CookBook:
             return True
 
     def findFolder(self, x):
-        document_path = os.path.join(os.path.expanduser('~'), 'Documents')
         try:
+            document_path = os.path.join(os.path.expanduser('~'), 'Documents')
             data_path = os.path.join(document_path, "cookbook")
-            x = os.path.join(data_path,x)
+            folders = os.listdir(data_path)
+
+            if x in folders:
+                self.folder_path = os.path.join(data_path, x)
+                self.selected = self.folder_path
+                return True
+            else:
+                return False
         except Exception as e:
             print(e)
+            return False
 
     def listSelected(self):
         path = self.folder_path
-        files_and_dirs = [item for item in os.listdir(path) if os.path.isfile(os.path.join(path, item))]
+        files_and_dirs = os.listdir(path)
         i=0
-        for item in files_and_dirs:
-            if item.endswith('.txt'):
-                print("-",item[:-4])
-                i += 1
-            return True
+        for i, item in enumerate(files_and_dirs, start= 1):
+            i = i+1
+            print(f"- {item}")
         if i == 0:
-            print("No recipe founded, please try creating new recipe")
-            return False
+            print("No recipe folder founded, please try creating new folder")
+            return True
 
 
 
@@ -168,8 +204,13 @@ if __name__ == "__main__":
                 elif x == 2:
                     if not app.listFile():
                         i = input("Enter file name to select (case-sensitive) >> ")
-                        app.findFolder(i)
-                        break
+                        if app.findFolder(i):
+                            break
+                        else:
+                            print("No files founded")
+                            input("Enter to proceed")
+
+
                     else:
                         input("'Enter' to continue")
                         continue
@@ -198,44 +239,50 @@ if __name__ == "__main__":
         3.  Delete Recipe
         4.  Back to folder selection
             """)
+            try:
+                get = int(input("(1/2/3/4)>>"))
 
-            get = int(input("(1/2/3/4)>>"))
+                if get == 1:
+                    app.createRecipe()
+                    input("'Enter' to continue")
 
-            if get == 1:
-                app.createRecipe()
-                input("'Enter' to continue")
-
-            elif get == 2:
-                while True:
-                    if not app.listSelected():
-                        input("'Enter' to continue")
-                        break
-                    else:
-                        t = input("Enter recipe name to view >>")
-                        if t == "back":
+                elif get == 2:
+                    while True:
+                        if app.listSelected():
                             input("'Enter' to continue")
                             break
-                        if not app.viewRecipe(t):
-                            input("'Enter' to continue")
-                            break
+                        else:
+                            t = input("Enter recipe name to view (case sensitive) >>")
+                            if t == "back":
+                                input("'Enter' to continue")
+                                break
+                            if app.viewRecipe(t):
+                                input("'Enter' to continue")
+                                break
 
-            elif get == 3:
-                while True:
-                    if not app.listSelected():
-                        input("'Enter' to continue")
-                        break
-                    else:
-                        go = input("Enter a file to be deleted >>")
-                        if go == "back":
+                elif get == 3:
+                    while True:
+                        if not app.listSelected():
                             input("'Enter' to continue")
                             break
-                        if not app.deleteRecipe(go):
-                            input("'Enter' to continue")
-                            break
+                        else:
+                            go = input("Enter a file to be deleted >>")
+                            if go == "back":
+                                input("'Enter' to continue")
+                                break
+                            if not app.deleteRecipe(go):
+                                input("'Enter' to continue")
+                                break
 
-            elif get == 4:
-                app.clear()
-                break
+                elif get == 4:
+                    app.clear()
+                    break
+
+                elif get == 10:
+                    app.selectedd()
+
+            except ValueError:
+                continue
 
 
 
